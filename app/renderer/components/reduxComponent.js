@@ -15,19 +15,29 @@ const buildPropsImpl = (props, componentType) => {
   return fn(state, props)
 }
 
+const checkParam = function (old, next, prop) {
+  return isList(next[prop])
+    ? !isSameHashCode(next[prop], old[prop])
+    : next[prop] !== old[prop]
+}
+
+const didPropsChange = function (oldProps, newProps) {
+  const propKeys = Array.from(new Set(Object.keys(oldProps).concat(Object.keys(newProps))))
+  return propKeys.some((prop) => checkParam(oldProps, newProps, prop))
+}
+
 class ReduxComponent extends ImmutableComponent {
   constructor (componentType, props) {
     super(props)
-    this.state = {}
     this.componentType = componentType
-    this.internalState = this.buildProps(this.props)
-    this.checkForUpdates = debounce(this.checkForUpdates.bind(this), 5)
+    this.state = this.buildProps(this.props)
+    this.checkForUpdates = debounce(this.checkForUpdates.bind(this), 25)
     this.dontCheck = true
   }
 
   checkForUpdates () {
-    if (!this.dontCheck && this.shouldComponentUpdate(this.props)) {
-      this.forceUpdate()
+    if (!this.dontCheck) {
+      this.setState(this.buildProps(this.props))
     }
   }
 
@@ -43,19 +53,14 @@ class ReduxComponent extends ImmutableComponent {
     windowStore.removeChangeListener(this.checkForUpdates)
   }
 
-  checkParam (old, next, prop) {
-    return isList(next[prop])
-      ? !isSameHashCode(next[prop], old[prop])
-      : next[prop] !== old[prop]
+  componentWillReceiveProps (nextProps) {
+    if (didPropsChange(this.props, nextProps)) {
+      this.setState(this.buildProps(nextProps))
+    }
   }
 
   shouldComponentUpdate (nextProps, nextState) {
-    nextState = this.buildProps(nextProps)
-    const shouldUpdate = Object.keys(nextState).some((prop) => this.checkParam(this.internalState, nextState, prop))
-    if (shouldUpdate) {
-      this.internalState = nextState
-    }
-    return shouldUpdate
+    return didPropsChange(this.props, nextProps) || didPropsChange(this.state, nextState)
   }
 
   mergeProps (stateProps, ownProps) {
@@ -67,7 +72,7 @@ class ReduxComponent extends ImmutableComponent {
   }
 
   render () {
-    return React.createElement(this.componentType, this.internalState)
+    return React.createElement(this.componentType, this.state)
   }
 }
 
