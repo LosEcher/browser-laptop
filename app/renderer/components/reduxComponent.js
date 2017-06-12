@@ -22,8 +22,22 @@ const checkParam = function (old, next, prop) {
 }
 
 const didPropsChange = function (oldProps, newProps) {
-  const propKeys = Array.from(new Set(Object.keys(oldProps).concat(Object.keys(newProps))))
-  return propKeys.some((prop) => checkParam(oldProps, newProps, prop))
+  let checked = {}
+  const oldKeys = Object.keys(oldProps)
+  for (let prop of oldKeys) {
+    if (checkParam(oldProps, newProps, prop)) {
+      return true
+    } else {
+      checked[prop] = true
+    }
+  }
+  const newKeys = Object.keys(newProps)
+  for (let prop of newKeys) {
+    if (!checked[prop] && checkParam(oldProps, newProps, prop)) {
+      return true
+    }
+  }
+  return false
 }
 
 class ReduxComponent extends ImmutableComponent {
@@ -37,7 +51,10 @@ class ReduxComponent extends ImmutableComponent {
 
   checkForUpdates () {
     if (!this.dontCheck) {
-      this.setState(this.buildProps(this.props))
+      const newState = this.buildProps(this.props)
+      if (didPropsChange(this.state, newState)) {
+        this.setState(newState)
+      }
     }
   }
 
@@ -60,7 +77,8 @@ class ReduxComponent extends ImmutableComponent {
   }
 
   shouldComponentUpdate (nextProps, nextState) {
-    return didPropsChange(this.props, nextProps) || didPropsChange(this.state, nextState)
+    // we only update the state when it actually changes so this can be a simple equality check
+    return this.state !== nextState
   }
 
   mergeProps (stateProps, ownProps) {
