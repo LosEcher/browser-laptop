@@ -2,7 +2,6 @@ const appStore = require('../../../js/stores/appStoreRenderer')
 const ImmutableComponent = require('./immutableComponent')
 const React = require('react')
 const windowStore = require('../../../js/stores/windowStore')
-const debounce = require('../../../js/lib/debounce')
 const {isList, isSameHashCode} = require('../../common/state/immutableUtil')
 
 const mergePropsImpl = (stateProps, ownProps) => {
@@ -45,7 +44,7 @@ class ReduxComponent extends ImmutableComponent {
     super(props)
     this.componentType = componentType
     this.state = this.buildProps(this.props)
-    this.checkForUpdates = debounce(this.checkForUpdates.bind(this), 5)
+    this.checkForUpdates = this.checkForUpdates.bind(this)
     this.dontCheck = true
   }
 
