@@ -45,7 +45,7 @@ class ReduxComponent extends ImmutableComponent {
     super(props)
     this.componentType = componentType
     this.state = this.buildProps(this.props)
-    this.checkForUpdates = debounce(this.checkForUpdates.bind(this), 25)
+    this.checkForUpdates = debounce(this.checkForUpdates.bind(this), 5)
     this.dontCheck = true
   }
 
