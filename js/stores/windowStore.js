@@ -230,7 +230,7 @@ const frameGuestInstanceIdChanged = (state, action) => {
 }
 
 const windowStore = new WindowStore()
-const emitChanges = debounce(windowStore.emitChanges.bind(windowStore), 5)
+const emitChanges = debounce(windowStore.emitChanges.bind(windowStore), 20)
 
 const applyReducers = (state, action, immutableAction) => [
   require('../../app/renderer/reducers/urlBarReducer'),
