@@ -105,26 +105,22 @@ class Window extends React.Component {
   }
 
   onChange () {
-    setImmediate(() => {
-      this.windowState = windowStore.getState()
-      this.setState({
-        immutableData: {
-          windowState: this.windowState,
-          appState: this.appState
-        }
-      })
+    this.windowState = windowStore.getState()
+    this.setState({
+      immutableData: {
+        windowState: this.windowState,
+        appState: this.appState
+      }
     })
   }
 
   onAppStateChange () {
-    setImmediate(() => {
-      this.appState = appStoreRenderer.state
-      this.setState({
-        immutableData: {
-          windowState: this.windowState,
-          appState: this.appState
-        }
-      })
+    this.appState = appStoreRenderer.state
+    this.setState({
+      immutableData: {
+        windowState: this.windowState,
+        appState: this.appState
+      }
     })
   }
 }
