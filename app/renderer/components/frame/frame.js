@@ -82,11 +82,10 @@ class Frame extends React.Component {
   }
 
   get tab () {
-    const frame = this.frame
     if (!appStoreRenderer.state.get('tabs')) {
       return undefined
     }
-    return appStoreRenderer.state.get('tabs').find((tab) => tab.get('tabId') === frame.get('tabId'))
+    return tabState.getByTabId(appStoreRenderer.state, this.props.tabId)
   }
 
   onCloseFrame () {
