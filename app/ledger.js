@@ -521,7 +521,7 @@ if (ipc) {
     ctx.RLD = tldjs.getSubdomain(ctx.host)
     ctx.QLD = ctx.RLD ? underscore.last(ctx.RLD.split('.')) : ''
 
-    event.returnValue = { context: ctx, rules: publisherInfo._internal.ruleset.cooked }
+    event.sender.send(messages.LEDGER_PUBLISHER_RESPONSE + '-' + location, { context: ctx, rules: publisherInfo._internal.ruleset.cooked })
   })
 
   ipc.on(messages.NOTIFICATION_RESPONSE, (e, message, buttonIndex) => {
