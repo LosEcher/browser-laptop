@@ -93,15 +93,6 @@ class Frame extends React.Component {
     windowActions.closeFrame(this.props.frameKey)
   }
 
-  getFrameBraverySettings (props) {
-    props = props || this.props
-    const frameSiteSettings =
-      siteSettings.getSiteSettingsForURL(props.allSiteSettings, props.location)
-    return Immutable.fromJS(siteSettings.activeSettings(frameSiteSettings,
-                                                        appStoreRenderer.state,
-                                                        appConfig))
-  }
-
   isAboutPage () {
     return aboutUrls.get(getBaseUrl(this.props.location))
   }
@@ -114,26 +105,18 @@ class Frame extends React.Component {
     return !this.webview
   }
 
-  runInsecureContent () {
-    const activeSiteSettings = siteSettings.getSiteSettingsForHostPattern(this.props.allSiteSettings, this.origin)
-    return activeSiteSettings === undefined
-      ? false : activeSiteSettings.get('runInsecureContent')
-  }
-
   allowRunningWidevinePlugin (url) {
     if (!this.props.isWidevineEnabled) {
       return false
     }
-    const origin = url ? siteUtil.getOrigin(url) : this.origin
-    if (!origin) {
+    if (!this.props.origin) {
       return false
     }
     // Check for at least one CtP allowed on this origin
     if (!this.props.allSiteSettings) {
       return false
     }
-    const activeSiteSettings = siteSettings.getSiteSettingsForHostPattern(this.props.allSiteSettings, origin)
-    if (activeSiteSettings && typeof activeSiteSettings.get('widevine') === 'number') {
+    if (typeof this.props.widevine === 'number') {
       return true
     }
     return false
@@ -142,29 +125,24 @@ class Frame extends React.Component {
   expireContentSettings (origin) {
     // Expired Flash settings should be deleted when the webview is
     // navigated or closed. Same for NoScript's allow-once option.
-    const activeSiteSettings = siteSettings.getSiteSettingsForHostPattern(this.props.allSiteSettings, origin)
-    if (!activeSiteSettings) {
-      return
-    }
-    if (typeof activeSiteSettings.get('flash') === 'number') {
-      if (activeSiteSettings.get('flash') < Date.now()) {
+    if (typeof this.props.flash === 'number') {
+      if (this.props.flash < Date.now()) {
         appActions.removeSiteSetting(origin, 'flash', this.props.isPrivate)
       }
     }
-    if (activeSiteSettings.get('widevine') === 0) {
+    if (this.props.widevine === 0) {
       appActions.removeSiteSetting(origin, 'widevine', this.props.isPrivate)
     }
-    if (activeSiteSettings.get('noScript') === 0) {
+    if (this.props.noScript === 0) {
       appActions.removeSiteSetting(origin, 'noScript', this.props.isPrivate)
     }
-    const noScriptExceptions = activeSiteSettings.get('noScriptExceptions')
-    if (noScriptExceptions) {
-      appActions.noScriptExceptionsAdded(origin, noScriptExceptions.filter((value, host) => value !== 0))
+    if (this.props.noScriptExceptions) {
+      appActions.noScriptExceptionsAdded(origin, this.props.noScriptExceptions.filter((value, host) => value !== 0))
     }
   }
 
   componentWillUnmount () {
-    this.expireContentSettings(this.origin)
+    this.expireContentSettings(this.props.origin)
   }
 
   updateWebview (cb, prevProps = {}) {
@@ -615,7 +593,7 @@ class Frame extends React.Component {
       }
       if (e.isMainFrame && !e.isErrorPage && !e.isFrameSrcDoc) {
         if (e.url && e.url.startsWith(appConfig.noScript.twitterRedirectUrl) &&
-          this.getFrameBraverySettings(this.props).get('noScript') === true) {
+          this.props.noScript === true) {
           // This result will be canceled immediately by sitehacks, so don't
           // update the load state; otherwise it will not show the security
           // icon.
@@ -702,7 +680,7 @@ class Frame extends React.Component {
         return
       }
       let isSecure = null
-      let runInsecureContent = this.runInsecureContent()
+      let runInsecureContent = this.props.runInsecureContent
       if (e.securityState === 'secure') {
         isSecure = true
       } else if (e.securityState === 'insecure') {
@@ -773,7 +751,7 @@ class Frame extends React.Component {
     })
     this.webview.addEventListener('did-finish-load', (e) => {
       loadEnd(true, e.validatedURL)
-      if (this.runInsecureContent()) {
+      if (this.props.runInsecureContent) {
         appActions.removeSiteSetting(this.origin, 'runInsecureContent', this.props.isPrivate)
       }
     })
@@ -891,10 +869,15 @@ class Frame extends React.Component {
     const currentWindow = state.get('currentWindow')
     const frame = frameStateUtil.getFrameByKey(currentWindow, ownProps.frameKey) || Immutable.Map()
     const location = frame.get('location')
+    const origin = location ? siteUtil.getOrigin(location) : null
+
     const allSiteSettings = siteSettingsState.getAllSiteSettings(state, frame.get('isPrivate'))
-    const frameSiteSettings = frame.get('location')
+    const frameSiteSettings = location
       ? siteSettings.getSiteSettingsForURL(allSiteSettings, frame.get('location'))
       : undefined
+    // const braverySettings = frameSiteSettings ? siteSettings.activeSettings(frameSiteSettings, state, appConfig) : {}
+    const activeSiteSettings = origin ? siteSettings.getSiteSettingsForHostPattern(allSiteSettings, origin) : null
+
     const contextMenu = currentWindow.get('contextMenuDetail')
     const tabId = frame.get('tabId')
     const tab = tabId && tabId > -1 && tabState.getByTabId(state, tabId)
@@ -913,6 +896,12 @@ class Frame extends React.Component {
     props.showMessageBox = tab && tab.get('messageBoxDetail')
 
     // used in other functions
+    props.origin = origin
+    props.runInsecureContent = activeSiteSettings ? activeSiteSettings.get('runInsecureContent') : false
+    props.noScript = activeSiteSettings ? activeSiteSettings.get('noScript') : false
+    props.noScriptExceptions = activeSiteSettings ? activeSiteSettings.get('noScriptExceptions') : null
+    props.widevine = activeSiteSettings ? activeSiteSettings.get('widevine') : false
+    props.flash = activeSiteSettings ? activeSiteSettings.get('flash') : false
     props.urlBarFocused = frame && frame.getIn(['navbar', 'urlbar', 'focused'])
     props.isAutFillContextMenu = contextMenu && contextMenu.get('type') === 'autofill'
     props.isSecure = frame.getIn(['security', 'isSecure'])
