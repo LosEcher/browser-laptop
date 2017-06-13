@@ -4,7 +4,6 @@
 
 // Constants
 const settings = require('../../../js/constants/settings')
-const {braveExtensionId} = require('../../../js/constants/config')
 
 // Utils
 const locale = require('../../../js/l10n')
@@ -54,19 +53,6 @@ const tabContentState = {
   canPlayAudio (state, frameKey) {
     const frame = frameStateUtil.getFrameByKey(state, frameKey)
     return frame.get('audioPlaybackActive') || frame.get('audioMuted')
-  },
-
-  isTabLoading: (state, frameKey) => {
-    const frame = frameStateUtil.getFrameByKey(state, frameKey)
-    return frame &&
-      (
-        frame.get('loading') ||
-        frame.get('location') === 'about:blank'
-      ) &&
-      (
-        !frame.get('provisionalLocation') ||
-        !frame.get('provisionalLocation').startsWith(`chrome-extension://${braveExtensionId}/`)
-      )
   },
 
   getPageIndex: (state) => {

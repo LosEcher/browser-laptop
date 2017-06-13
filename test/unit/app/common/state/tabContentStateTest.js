@@ -9,7 +9,6 @@ const Immutable = require('immutable')
 const mockery = require('mockery')
 const sinon = require('sinon')
 const fakeElectron = require('../../../lib/fakeElectron')
-const {braveExtensionId} = require('../../../../../js/constants/config')
 
 const frameKey = 1
 const defaultWindowStore = Immutable.fromJS({
@@ -106,44 +105,6 @@ describe('tabContentState unit tests', function () {
       })
       const result = tabContentState.getDisplayTitle(windowStore, frameKey)
       assert.equal(result, 'Brave')
-    })
-  })
-
-  describe('isTabLoading', function () {
-    describe('when provisionalLocation is not set', function () {
-      it('returns true if frame.loading', function () {
-        getFrameByKeyMock = sinon.stub(frameStateUtil, 'getFrameByKey', (state, frameKey) => {
-          return Immutable.fromJS({loading: true})
-        })
-        assert.equal(tabContentState.isTabLoading(), true)
-      })
-      it('returns true if location is about:blank', function () {
-        getFrameByKeyMock = sinon.stub(frameStateUtil, 'getFrameByKey', (state, frameKey) => {
-          return Immutable.fromJS({location: 'about:blank'})
-        })
-        assert.equal(tabContentState.isTabLoading(), true)
-      })
-    })
-
-    describe('when provisionalLocation is set', function () {
-      it('returns false if loading and provisionalLocation is a brave about page', function () {
-        getFrameByKeyMock = sinon.stub(frameStateUtil, 'getFrameByKey', (state, frameKey) => {
-          return Immutable.fromJS({
-            loading: true,
-            provisionalLocation: `chrome-extension://${braveExtensionId}/pageGoesHere`
-          })
-        })
-        assert.equal(tabContentState.isTabLoading(), false)
-      })
-      it('returns true if loading and provisionalLocation is not a brave about page', function () {
-        getFrameByKeyMock = sinon.stub(frameStateUtil, 'getFrameByKey', (state, frameKey) => {
-          return Immutable.fromJS({
-            loading: true,
-            provisionalLocation: 'https://brave.com'
-          })
-        })
-        assert.equal(tabContentState.isTabLoading(), true)
-      })
     })
   })
 

@@ -11,6 +11,7 @@ const ReduxComponent = require('../../reduxComponent')
 const TabIcon = require('./tabIcon')
 
 // State
+const tabState = require('../../../../common/state/tabState')
 const tabContentState = require('../../../../common/state/tabContentState')
 
 // Utils
@@ -32,7 +33,8 @@ class Favicon extends React.Component {
   mergeProps (state, ownProps) {
     const currentWindow = state.get('currentWindow')
     const frame = frameStateUtil.getFrameByKey(currentWindow, ownProps.frameKey) || Immutable.Map()
-    const isTabLoading = tabContentState.isTabLoading(currentWindow, ownProps.frameKey)
+    const tabId = frame.get('tabId')
+    const isTabLoading = tabState.isLoading(state, tabId)
 
     const props = {}
     // used in renderer
