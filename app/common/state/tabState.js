@@ -565,8 +565,8 @@ const tabState = {
   },
 
   isLoading: (state, tabId) => {
-    const frame = tabState.getFrameByTabId(state, tabId)
-    return frame ? frameStateUtil.isFrameLoading(frame) : null
+    return tabState.getTabPropertyByTabId(state, tabId, 'status', 'complete') !== 'complete'
+  },
   },
 
   startLoadTime: (state, tabId) => {
